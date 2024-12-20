@@ -40,11 +40,11 @@ class BaseRepository(Generic[ModelType]):
     async def update(self, id: str, data: Dict[str, Any]) -> Optional[ModelType]:
         try:
             result = await self.collection.update_one(
-                {"_id": ObjectId(id)},
+                {"note_id":id},
                 {"$set": data}
             )
             if result.modified_count:
-                updated_doc = await self.collection.find_one({"_id": ObjectId(id)})
+                updated_doc = await self.collection.find_one({"note_id": id})
                 return self.model(**updated_doc) if updated_doc else None
             return None
         except Exception as e:
@@ -53,7 +53,7 @@ class BaseRepository(Generic[ModelType]):
 
     async def delete(self, id: str) -> bool:
         try:
-            result = await self.collection.delete_one({"_id": ObjectId(id)})
+            result = await self.collection.delete_one({"note_id": id})
             return result.deleted_count > 0
         except Exception as e:
             log_error(e, {"context": f"delete in {self.collection.name}", "id": id})

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { format } from 'date-fns';
 import { Note, useNotes } from '@/lib/store';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,33 +11,34 @@ import {
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogFooter,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import NoteEditor from './note-editor';
+import { format } from 'date-fns';
 
 interface NoteCardProps {
   note: Note;
+  handleUpdateNote: (updatedNote: Note) => void;  // Pass the update function down
 }
 
-export default function NoteCard({ note }: NoteCardProps) {
+export default function NoteCard({ note, handleUpdateNote }: NoteCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const { updateNote, deleteNote } = useNotes();
 
   const isValidDate = (date: string) => {
-    const parsedDate = new Date(date);
-    return !isNaN(parsedDate.getTime());  // Returns true if the date is valid
+    const parsedDate = Date.parse(date);
+    return !isNaN(parsedDate);  // Returns true if the date is valid
   };
-  
 
   // Handle note deletion (send delete request to the backend)
   const handleDelete = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:8000/api/v1/notes/${note.id}`, {
+      const response = await fetch(`http://localhost:8000/api/v1/notes/${note.note_id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -46,7 +46,7 @@ export default function NoteCard({ note }: NoteCardProps) {
       });
 
       if (response.ok) {
-        deleteNote(note.id); // Remove the note from state after successful deletion
+        deleteNote(note.note_id); // Remove the note from state after successful deletion
       } else {
         console.error('Failed to delete note');
       }
@@ -62,11 +62,7 @@ export default function NoteCard({ note }: NoteCardProps) {
           <div className="flex items-start justify-between">
             <h3 className="font-semibold text-lg line-clamp-1">{note.title}</h3>
             <div className="flex space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsEditing(true)}
-              >
+              <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
                 <Pencil className="h-4 w-4" />
               </Button>
               <AlertDialog>
@@ -98,11 +94,10 @@ export default function NoteCard({ note }: NoteCardProps) {
           <p className="text-muted-foreground line-clamp-3">{note.content}</p>
         </CardContent>
         <CardFooter>
-  <p className="text-xs text-muted-foreground">
-    Last updated: {isValidDate(note.updatedAt) ? format(new Date(note.updatedAt), 'MMM d, yyyy') : 'Invalid Date'}
-  </p>
-</CardFooter>
-
+          <p className="text-xs text-muted-foreground">
+            Last updated: {isValidDate(note.updatedAt) ? format(new Date(note.updatedAt), 'MMM d, yyyy h:mm a') : 'Invalid Date'}
+          </p>
+        </CardFooter>
       </Card>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
@@ -110,6 +105,7 @@ export default function NoteCard({ note }: NoteCardProps) {
           <NoteEditor
             note={note}
             onClose={() => setIsEditing(false)} // Pass the update function to NoteEditor
+            handleUpdateNote={handleUpdateNote}  // Pass the update function down
           />
         </DialogContent>
       </Dialog>

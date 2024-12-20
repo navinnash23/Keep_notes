@@ -5,15 +5,17 @@ import StarterKit from '@tiptap/starter-kit';
 import { Note } from '@/lib/store';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface NoteEditorProps {
   note: Note;
-  onClose: () => void;
+  onClose: (updatedNote?: Note) => void; 
+  handleUpdateNote: (updatedNote: Note) => void; 
 }
 
 export default function NoteEditor({ note, onClose }: NoteEditorProps) {
   const [title, setTitle] = useState(note.title);
+  const [content, setContent] = useState(note.content);
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -25,11 +27,17 @@ export default function NoteEditor({ note, onClose }: NoteEditorProps) {
     },
   });
 
+  useEffect(() => {
+    if (editor) {
+      editor.chain().setContent(content).run();
+    }
+  }, [content, editor]);
+
   const handleSave = async () => {
     if (editor) {
       try {
         const token = localStorage.getItem('access_token');
-        const response = await fetch(`http://localhost:8000/api/v1/notes/${note.id}`, {
+        const response = await fetch(`http://localhost:8000/api/v1/notes/${note.note_id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -41,11 +49,10 @@ export default function NoteEditor({ note, onClose }: NoteEditorProps) {
             updatedAt: new Date().toISOString(),
           }),
         });
-
+  
         if (response.ok) {
           const updatedNote = await response.json();
-          // You can optionally update the local state if needed, or simply close the editor
-          onClose();
+          onClose(updatedNote); // Pass updated note to parent for dynamic rendering
         } else {
           console.error('Failed to update note');
         }
@@ -54,7 +61,7 @@ export default function NoteEditor({ note, onClose }: NoteEditorProps) {
       }
     }
   };
-
+  
   return (
     <div className="space-y-4">
       <Input
@@ -65,7 +72,7 @@ export default function NoteEditor({ note, onClose }: NoteEditorProps) {
       />
       <EditorContent editor={editor} className="min-h-[300px] border rounded-md p-4" />
       <div className="flex justify-end space-x-2">
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={() => onClose()}>
           Cancel
         </Button>
         <Button onClick={handleSave}>Save</Button>

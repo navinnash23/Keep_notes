@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export interface Note {
-  id: string;
+  note_id: string;
+  id?: string;
   title: string;
   content: string;
   createdAt: string;
@@ -11,6 +12,7 @@ export interface Note {
 
 interface AuthState {
   user: {
+    user_id:string;
     id: string;
     name: string;
     email: string;

@@ -64,11 +64,6 @@ export default function SignIn() {
         const data = await response.json();
         localStorage.setItem('access_token', data.access_token);
         // Store user data (e.g., JWT token or user information) in localStorage or context
-        setUser({
-          id: data.id,
-          name: data.name,
-          email: data.email,
-        });
         toast({
           variant: 'default',
           title: 'Success',
